@@ -745,6 +745,16 @@ function showPage(pageId) {
   const noScroll = ['lesson'];
   const btt = document.getElementById('back-to-top');
   if (btt) btt.style.display = noScroll.includes(pageId) ? 'none' : '';
+
+  // active nav link highlight
+  document.querySelectorAll('.nav-link').forEach(link => {
+    const linkPage = link.getAttribute('onclick')?.match(/showPage\('([^']+)'\)/)?.[1];
+    link.classList.toggle('nav-link-active', linkPage === pageId);
+  });
+
+  // init pages on first visit
+  if (pageId === 'leaderboard') renderLeaderboard(currentLBFilter || 'all');
+  if (pageId === 'compiler') initCompiler();
 }
 
 // ============================================================
@@ -1323,4 +1333,1034 @@ document.addEventListener('DOMContentLoaded', () => {
     el.classList.add('fade-in-target');
     observer.observe(el);
   });
+
+  initCompiler();
+  initLeaderboard();
+  initAboutTeam();
 });
+
+// ============================================================
+// COMPILER PAGE
+// ============================================================
+
+// ============================================================
+// TOKENIZER — shared by all simulators
+// Splits source into: string literals, numbers, identifiers, operators, punctuation
+// ============================================================
+function tokenize(src) {
+  const tokens = [];
+  let i = 0;
+  while (i < src.length) {
+    // Skip line comments
+    if (src[i] === '/' && src[i+1] === '/') {
+      while (i < src.length && src[i] !== '\n') i++;
+      continue;
+    }
+    // Skip block comments
+    if (src[i] === '/' && src[i+1] === '*') {
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i+1] === '/')) i++;
+      i += 2;
+      continue;
+    }
+    // Skip hash-comments (Python)
+    if (src[i] === '#') {
+      while (i < src.length && src[i] !== '\n') i++;
+      continue;
+    }
+    // Newline
+    if (src[i] === '\n') { tokens.push({ type: 'newline' }); i++; continue; }
+    // Whitespace
+    if (src[i] === ' ' || src[i] === '\t' || src[i] === '\r') { i++; continue; }
+    // String: double-quoted
+    if (src[i] === '"') {
+      let s = '';
+      i++; // skip opening "
+      while (i < src.length && src[i] !== '"') {
+        if (src[i] === '\\' && i+1 < src.length) {
+          const esc = src[i+1];
+          if (esc === 'n') s += '\n';
+          else if (esc === 't') s += '\t';
+          else if (esc === '\\') s += '\\';
+          else if (esc === '"') s += '"';
+          else s += src[i+1];
+          i += 2;
+        } else {
+          s += src[i]; i++;
+        }
+      }
+      i++; // skip closing "
+      tokens.push({ type: 'string', value: s });
+      continue;
+    }
+    // String: single-quoted (Python/JS)
+    if (src[i] === "'") {
+      let s = '';
+      i++;
+      while (i < src.length && src[i] !== "'") {
+        if (src[i] === '\\' && i+1 < src.length) {
+          const esc = src[i+1];
+          if (esc === 'n') s += '\n';
+          else if (esc === 't') s += '\t';
+          else s += src[i+1];
+          i += 2;
+        } else { s += src[i]; i++; }
+      }
+      i++;
+      tokens.push({ type: 'string', value: s });
+      continue;
+    }
+    // Template literal (JS)  `...${expr}...`
+    if (src[i] === '`') {
+      let s = '';
+      i++;
+      while (i < src.length && src[i] !== '`') {
+        if (src[i] === '$' && src[i+1] === '{') {
+          // collect expression inside ${}
+          i += 2;
+          let expr = '';
+          let depth = 1;
+          while (i < src.length && depth > 0) {
+            if (src[i] === '{') depth++;
+            else if (src[i] === '}') { depth--; if (depth === 0) { i++; break; } }
+            expr += src[i]; i++;
+          }
+          s += '\x00EXPR\x00' + expr + '\x00'; // placeholder
+        } else if (src[i] === '\\' && i+1 < src.length) {
+          const esc = src[i+1];
+          if (esc === 'n') s += '\n';
+          else if (esc === 't') s += '\t';
+          else s += src[i+1];
+          i += 2;
+        } else { s += src[i]; i++; }
+      }
+      i++;
+      tokens.push({ type: 'template', raw: s });
+      continue;
+    }
+    // f-string (Python)  f"...{expr}..."  or  f'...'
+    if ((src[i] === 'f' || src[i] === 'F') && (src[i+1] === '"' || src[i+1] === "'")) {
+      const q = src[i+1];
+      i += 2;
+      let s = '';
+      while (i < src.length && src[i] !== q) {
+        if (src[i] === '{' && src[i+1] !== '{') {
+          i++;
+          let expr = '';
+          let depth = 1;
+          while (i < src.length && depth > 0) {
+            if (src[i] === '{') depth++;
+            else if (src[i] === '}') { depth--; if (depth === 0) { i++; break; } }
+            expr += src[i]; i++;
+          }
+          // strip format spec  :  .2f  etc
+          const colonIdx = expr.indexOf(':');
+          if (colonIdx !== -1) expr = expr.slice(0, colonIdx);
+          s += '\x00EXPR\x00' + expr.trim() + '\x00';
+        } else if (src[i] === '\\' && i+1 < src.length) {
+          const esc = src[i+1];
+          if (esc === 'n') s += '\n';
+          else if (esc === 't') s += '\t';
+          else s += src[i+1];
+          i += 2;
+        } else { s += src[i]; i++; }
+      }
+      i++;
+      tokens.push({ type: 'template', raw: s });
+      continue;
+    }
+    // Numbers (int or float)
+    if ((src[i] >= '0' && src[i] <= '9') || (src[i] === '-' && src[i+1] >= '0' && src[i+1] <= '9' && tokens.length && ['op','punct','newline'].includes(tokens[tokens.length-1]?.type))) {
+      let n = '';
+      if (src[i] === '-') { n += '-'; i++; }
+      while (i < src.length && ((src[i] >= '0' && src[i] <= '9') || src[i] === '.' || src[i] === 'f')) {
+        if (src[i] !== 'f') n += src[i];
+        i++;
+      }
+      tokens.push({ type: 'number', value: parseFloat(n) });
+      continue;
+    }
+    // Identifiers / keywords
+    if ((src[i] >= 'a' && src[i] <= 'z') || (src[i] >= 'A' && src[i] <= 'Z') || src[i] === '_') {
+      let w = '';
+      while (i < src.length && ((src[i] >= 'a' && src[i] <= 'z') || (src[i] >= 'A' && src[i] <= 'Z') || (src[i] >= '0' && src[i] <= '9') || src[i] === '_')) {
+        w += src[i]; i++;
+      }
+      tokens.push({ type: 'ident', value: w });
+      continue;
+    }
+    // Two-char operators
+    if (i+1 < src.length) {
+      const two = src[i] + src[i+1];
+      if (['==','!=','<=','>=','&&','||','++','--','+=','-=','*=','/=','<<','>>'].includes(two)) {
+        tokens.push({ type: 'op', value: two }); i += 2; continue;
+      }
+    }
+    // Single-char punctuation / operators
+    const ch = src[i];
+    if ('(){}[];,'.includes(ch)) { tokens.push({ type: 'punct', value: ch }); i++; continue; }
+    if ('=+-*/<>!%&|^~'.includes(ch)) { tokens.push({ type: 'op', value: ch }); i++; continue; }
+    // anything else (e.g. : . @)
+    tokens.push({ type: 'other', value: ch }); i++;
+  }
+  return tokens;
+}
+
+// ============================================================
+// EXPRESSION EVALUATOR — resolves arithmetic & variable lookups
+// ============================================================
+function evalExpr(expr, env) {
+  expr = expr.trim();
+  if (!expr) return '';
+
+  // Try JS eval with env variables injected — safe subset only (numbers, strings, basic ops)
+  // Build a tiny scope string
+  try {
+    const safeKeys = Object.keys(env).filter(k => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k));
+    const scope = safeKeys.map(k => {
+      const v = env[k];
+      if (typeof v === 'string') return `var ${k} = ${JSON.stringify(v)};`;
+      if (typeof v === 'number') return `var ${k} = ${v};`;
+      if (Array.isArray(v)) return `var ${k} = ${JSON.stringify(v)};`;
+      return '';
+    }).join(' ');
+    // Only allow safe expressions (no function calls that could do harm)
+    // Strip anything that looks dangerous
+    const safe = expr
+      .replace(/\bimport\b|\brequire\b|\beval\b|\bFunction\b|\bwindow\b|\bdocument\b|\bprocess\b/g, '0');
+    // eslint-disable-next-line no-new-func
+    const result = new Function(scope + ' return (' + safe + ');')();
+    if (result === undefined || result === null) return '';
+    if (typeof result === 'number') {
+      // Format nicely: avoid floating garbage like 3.8000000001
+      return Number.isInteger(result) ? String(result) : parseFloat(result.toFixed(6)).toString();
+    }
+    return String(result);
+  } catch {
+    // fallback: just look it up directly
+    if (expr in env) return String(env[expr]);
+    return expr;
+  }
+}
+
+// ============================================================
+// VARIABLE EXTRACTOR — walks token stream and builds env map
+// Handles: int/float/double/char/String x = val;
+//          x = val;   (reassignment)
+//          Python: x = val
+//          JS: let/const/var x = val
+// ============================================================
+function extractVars(tokens) {
+  const env = {};
+  const C_TYPES = new Set(['int','float','double','char','long','short','unsigned','bool','string','String']);
+  const SKIP_KW  = new Set(['if','else','while','for','return','printf','print','cout','System','void','class','public','static','include','using','namespace','def','import','from','and','or','not','True','False','None']);
+
+  let i = 0;
+  while (i < tokens.length) {
+    const tok = tokens[i];
+
+    // C/C++ typed declaration:  int x = 10;  or  int x = 10, y = 20;
+    if (tok.type === 'ident' && C_TYPES.has(tok.value) && !SKIP_KW.has(tok.value)) {
+      i++;
+      // skip pointer/ref chars
+      while (i < tokens.length && tokens[i].type === 'op' && '*&'.includes(tokens[i].value)) i++;
+      // could be  char name[] = ...
+      while (i < tokens.length && tokens[i].type === 'ident') {
+        const varName = tokens[i].value;
+        i++;
+        // skip array brackets []
+        if (i < tokens.length && tokens[i].type === 'punct' && tokens[i].value === '[') {
+          while (i < tokens.length && tokens[i].value !== ']') i++;
+          i++; // skip ]
+        }
+        // assignment
+        if (i < tokens.length && tokens[i].type === 'op' && tokens[i].value === '=') {
+          i++; // skip =
+          const valTokens = [];
+          // collect until ; or , or newline
+          while (i < tokens.length && !(tokens[i].type === 'punct' && (tokens[i].value === ';' || tokens[i].value === ',')) && tokens[i].type !== 'newline') {
+            valTokens.push(tokens[i]); i++;
+          }
+          env[varName] = resolveValTokens(valTokens, env);
+        }
+        // skip comma → next var in same declaration
+        if (i < tokens.length && tokens[i].type === 'punct' && tokens[i].value === ',') { i++; continue; }
+        break;
+      }
+      continue;
+    }
+
+    // JS: let/const/var x = val
+    if (tok.type === 'ident' && (tok.value === 'let' || tok.value === 'const' || tok.value === 'var')) {
+      i++;
+      if (i < tokens.length && tokens[i].type === 'ident') {
+        const varName = tokens[i].value; i++;
+        if (i < tokens.length && tokens[i].type === 'op' && tokens[i].value === '=') {
+          i++;
+          const valTokens = [];
+          while (i < tokens.length && !(tokens[i].type === 'punct' && tokens[i].value === ';') && tokens[i].type !== 'newline') {
+            valTokens.push(tokens[i]); i++;
+          }
+          env[varName] = resolveValTokens(valTokens, env);
+        }
+      }
+      continue;
+    }
+
+    // Python / plain assignment:  x = val  (ident followed by =)
+    if (tok.type === 'ident' && !SKIP_KW.has(tok.value) && !C_TYPES.has(tok.value)) {
+      if (i+1 < tokens.length && tokens[i+1].type === 'op' && tokens[i+1].value === '=') {
+        // make sure it's not == (already split above)
+        const varName = tok.value;
+        i += 2; // skip ident and =
+        const valTokens = [];
+        while (i < tokens.length && !(tokens[i].type === 'punct' && tokens[i].value === ';') && tokens[i].type !== 'newline') {
+          valTokens.push(tokens[i]); i++;
+        }
+        env[varName] = resolveValTokens(valTokens, env);
+        continue;
+      }
+    }
+
+    i++;
+  }
+  return env;
+}
+
+// Turn a slice of tokens into an actual JS value
+function resolveValTokens(valTokens, env) {
+  if (!valTokens.length) return '';
+  // Single string literal
+  if (valTokens.length === 1 && valTokens[0].type === 'string') return valTokens[0].value;
+  // Single number
+  if (valTokens.length === 1 && valTokens[0].type === 'number') return valTokens[0].value;
+  // Single ident — look up
+  if (valTokens.length === 1 && valTokens[0].type === 'ident') {
+    const v = valTokens[0].value;
+    if (v === 'true' || v === 'True') return true;
+    if (v === 'false' || v === 'False') return false;
+    if (v === 'null' || v === 'NULL' || v === 'None') return null;
+    return env[v] !== undefined ? env[v] : v;
+  }
+  // Array literal [ ... ]
+  if (valTokens[0].type === 'punct' && valTokens[0].value === '[') {
+    const items = [];
+    let j = 1;
+    while (j < valTokens.length && !(valTokens[j].type === 'punct' && valTokens[j].value === ']')) {
+      const chunk = [];
+      while (j < valTokens.length && !(valTokens[j].type === 'punct' && (valTokens[j].value === ',' || valTokens[j].value === ']'))) {
+        chunk.push(valTokens[j]); j++;
+      }
+      if (chunk.length) items.push(resolveValTokens(chunk, env));
+      if (j < valTokens.length && valTokens[j].value === ',') j++;
+    }
+    return items;
+  }
+  // Rebuild as expression string and evaluate
+  const exprStr = valTokens.map(t => {
+    if (t.type === 'string') return JSON.stringify(t.value);
+    if (t.type === 'number') return String(t.value);
+    if (t.type === 'ident') return t.value;
+    return t.value || '';
+  }).join(' ');
+  return evalExpr(exprStr, env);
+}
+
+// ============================================================
+// FORMAT SPECIFIER RESOLVER — handles %d %s %f %.2f %c etc.
+// Takes a format string and an ordered list of already-resolved arg values
+// ============================================================
+function applyFormatSpecifiers(fmt, argValues) {
+  let argIdx = 0;
+  let out = '';
+  let i = 0;
+  while (i < fmt.length) {
+    if (fmt[i] === '%') {
+      i++;
+      if (i >= fmt.length) break;
+      if (fmt[i] === '%') { out += '%'; i++; continue; }
+      // Read optional flags/width/precision: e.g. %.1f, %5d, %-10s
+      let spec = '';
+      while (i < fmt.length && '0123456789.-+ #'.includes(fmt[i])) { spec += fmt[i]; i++; }
+      const conv = fmt[i] || ''; i++;
+      const val = argIdx < argValues.length ? argValues[argIdx++] : 0;
+      const num = typeof val === 'number' ? val : parseFloat(val);
+      if (conv === 'd' || conv === 'i') {
+        out += isNaN(num) ? String(val) : Math.trunc(num).toString();
+      } else if (conv === 'f' || conv === 'F') {
+        const decimals = spec.includes('.') ? parseInt(spec.split('.')[1]) || 6 : 6;
+        out += isNaN(num) ? String(val) : num.toFixed(decimals);
+      } else if (conv === 'e' || conv === 'E') {
+        out += isNaN(num) ? String(val) : num.toExponential();
+      } else if (conv === 'g' || conv === 'G') {
+        out += isNaN(num) ? String(val) : parseFloat(num.toPrecision(6)).toString();
+      } else if (conv === 's') {
+        const s = val === null || val === undefined ? '' : String(val);
+        if (spec) {
+          const width = parseInt(spec.replace(/[^0-9]/g, ''));
+          out += spec.startsWith('-') ? s.padEnd(width) : s.padStart(width);
+        } else {
+          out += s;
+        }
+      } else if (conv === 'c') {
+        if (typeof val === 'string') out += val[0] || '';
+        else out += isNaN(num) ? '' : String.fromCharCode(Math.trunc(num));
+      } else if (conv === 'n') {
+        // %n in Java printf means newline
+        out += '\n';
+      } else {
+        out += '%' + spec + conv;
+      }
+    } else {
+      out += fmt[i]; i++;
+    }
+  }
+  return out;
+}
+
+// ============================================================
+// ARG LIST PARSER — splits a raw arg-list string like  name, age, gpa
+// into individual expression strings, respecting nested parens/brackets
+// ============================================================
+function splitArgList(src) {
+  const args = [];
+  let current = '';
+  let depth = 0;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if ((ch === '(' || ch === '[' || ch === '{') ) depth++;
+    else if ((ch === ')' || ch === ']' || ch === '}')) depth--;
+    if (ch === ',' && depth === 0) {
+      args.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) args.push(current.trim());
+  return args;
+}
+
+// ============================================================
+// EXTRACT PRINT CALLS — language agnostic call finder
+// Returns array of { funcName, argsRaw } from the token stream
+// ============================================================
+function extractCalls(tokens, funcNames) {
+  const calls = [];
+  let i = 0;
+  while (i < tokens.length) {
+    // Match:  funcName  (  ...args...  )
+    if (tokens[i].type === 'ident' && funcNames.includes(tokens[i].value)) {
+      const fn = tokens[i].value;
+      i++;
+      // optional member access chain like System.out.println — skip dots and idents
+      while (i < tokens.length && tokens[i].type === 'other' && tokens[i].value === '.') {
+        i++; // skip dot
+        if (i < tokens.length && tokens[i].type === 'ident') i++; // skip member
+      }
+      if (i < tokens.length && tokens[i].type === 'punct' && tokens[i].value === '(') {
+        i++; // skip (
+        // collect everything until matching )
+        let depth = 1;
+        const argTokens = [];
+        while (i < tokens.length && depth > 0) {
+          if (tokens[i].type === 'punct' && tokens[i].value === '(') depth++;
+          else if (tokens[i].type === 'punct' && tokens[i].value === ')') { depth--; if (depth === 0) { i++; break; } }
+          argTokens.push(tokens[i]); i++;
+        }
+        calls.push({ fn, argTokens });
+        continue;
+      }
+    }
+    i++;
+  }
+  return calls;
+}
+
+// Reconstruct a raw string from arg tokens (for splitting)
+function argTokensToStr(argTokens) {
+  return argTokens.map(t => {
+    if (t.type === 'string')   return '"' + t.value.replace(/\n/g,'\\n').replace(/\t/g,'\\t').replace(/"/g,'\\"') + '"';
+    if (t.type === 'template') return '`' + t.raw + '`';
+    if (t.type === 'number')   return String(t.value);
+    if (t.type === 'newline')  return ' ';
+    return t.value !== undefined ? t.value : '';
+  }).join('');
+}
+
+// ============================================================
+// RESOLVE A SINGLE ARGUMENT EXPRESSION using env
+// ============================================================
+function resolveArg(argStr, env) {
+  argStr = argStr.trim();
+  // Quoted string literal
+  if ((argStr.startsWith('"') && argStr.endsWith('"')) ||
+      (argStr.startsWith("'") && argStr.endsWith("'"))) {
+    return argStr.slice(1, -1).replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  }
+  // Template / f-string token was stored with EXPR placeholders → resolve each
+  if (argStr.startsWith('`') && argStr.endsWith('`')) {
+    return resolveTemplate(argStr.slice(1, -1), env);
+  }
+  // Number literal
+  if (!isNaN(argStr) && argStr !== '') return parseFloat(argStr);
+  // Boolean / null
+  if (argStr === 'true' || argStr === 'True') return true;
+  if (argStr === 'false' || argStr === 'False') return false;
+  if (argStr === 'null' || argStr === 'NULL' || argStr === 'None') return null;
+  // Evaluate as expression (arithmetic, variable lookup, etc.)
+  return evalExpr(argStr, env);
+}
+
+function resolveTemplate(raw, env) {
+  // raw contains \x00EXPR\x00 expr \x00 placeholders
+  const parts = raw.split('\x00');
+  let out = '';
+  let j = 0;
+  while (j < parts.length) {
+    if (parts[j] === 'EXPR') {
+      j++;
+      const exprStr = parts[j] || '';
+      j++;
+      out += String(evalExpr(exprStr, env));
+    } else {
+      out += parts[j];
+      j++;
+    }
+  }
+  return out;
+}
+
+// ============================================================
+// PER-LANGUAGE SIMULATORS
+// ============================================================
+
+function simulateC(code) {
+  const tokens = tokenize(code);
+  const env = extractVars(tokens);
+  const calls = extractCalls(tokens, ['printf']);
+  const output = [];
+
+  for (const { argTokens } of calls) {
+    const raw = argTokensToStr(argTokens);
+    const args = splitArgList(raw);
+    if (!args.length) continue;
+
+    const firstTok = argTokens.find(t => t.type === 'string' || t.type === 'template');
+    let fmt;
+    if (firstTok) {
+      fmt = firstTok.type === 'template' ? resolveTemplate(firstTok.raw, env) : firstTok.value;
+    } else {
+      fmt = resolveArg(args[0], env);
+    }
+
+    // Resolve remaining args
+    const resolved = args.slice(1).map(a => resolveArg(a, env));
+    const line = applyFormatSpecifiers(String(fmt), resolved);
+    // Split on embedded \n
+    const parts = line.split('\n');
+    for (let k = 0; k < parts.length; k++) {
+      if (k < parts.length - 1) output.push(parts[k]);
+      else if (parts[k]) output.push(parts[k]);
+    }
+  }
+
+  if (!output.length) output.push('(no output — add printf() to see results)');
+  return { success: true, output: output.join('\n'), lang: 'C' };
+}
+
+function simulateCpp(code) {
+  const tokens = tokenize(code);
+  const env = extractVars(tokens);
+  const output = [];
+
+  // Walk tokens looking for:  cout  << expr1 << expr2 << ... << endl ;
+  let i = 0;
+  while (i < tokens.length) {
+    if (tokens[i].type === 'ident' && tokens[i].value === 'cout') {
+      i++;
+      let line = '';
+      let hasEndl = false;
+      while (i < tokens.length) {
+        // expect <<
+        if (!(tokens[i].type === 'op' && tokens[i].value === '<<')) break;
+        i++; // skip <<
+        if (i >= tokens.length) break;
+        const t = tokens[i];
+        if (t.type === 'ident' && (t.value === 'endl' || t.value === '\\n')) {
+          hasEndl = true; i++; break;
+        }
+        if (t.type === 'string') { line += t.value; i++; }
+        else if (t.type === 'template') { line += resolveTemplate(t.raw, env); i++; }
+        else {
+          // Expression — collect until next << or ; or endl
+          const exprToks = [];
+          while (i < tokens.length) {
+            const cur = tokens[i];
+            if (cur.type === 'op' && cur.value === '<<') break;
+            if (cur.type === 'punct' && cur.value === ';') break;
+            if (cur.type === 'ident' && cur.value === 'endl') break;
+            exprToks.push(cur); i++;
+          }
+          const exprStr = exprToks.map(t2 => {
+            if (t2.type === 'string') return JSON.stringify(t2.value);
+            if (t2.type === 'number') return String(t2.value);
+            return t2.value || '';
+          }).join(' ');
+          line += String(evalExpr(exprStr, env));
+        }
+      }
+      // Check for explicit \n in the line
+      const parts = line.split('\n');
+      for (let k = 0; k < parts.length; k++) {
+        if (k < parts.length - 1) output.push(parts[k]);
+        else if (parts[k] !== '') output.push(parts[k]);
+      }
+      if (hasEndl && parts[parts.length - 1] !== '') {
+        // endl already ended the line — do nothing extra, the push above handles it
+      } else if (!hasEndl && parts.length === 1) {
+        // no newline yet — will be joined
+      }
+      continue;
+    }
+    // Also handle printf in C++
+    if (tokens[i].type === 'ident' && tokens[i].value === 'printf') {
+      const result = simulateC(code);
+      output.push(...result.output.split('\n'));
+      break;
+    }
+    i++;
+  }
+
+  if (!output.length) output.push('(no output — add cout << or printf() to see results)');
+  return { success: true, output: output.join('\n'), lang: 'C++' };
+}
+
+function simulatePython(code) {
+  const tokens = tokenize(code);
+  const env = extractVars(tokens);
+  const calls = extractCalls(tokens, ['print']);
+  const output = [];
+
+  for (const { argTokens } of calls) {
+    const raw = argTokensToStr(argTokens);
+    const args = splitArgList(raw);
+    if (!args.length) { output.push(''); continue; }
+
+    const parts = [];
+    for (const arg of args) {
+      const t = argTokens.find(tk => tk.type === 'template');
+      if (t && args.length === 1) {
+        parts.push(resolveTemplate(t.raw, env));
+      } else {
+        const val = resolveArg(arg, env);
+        if (Array.isArray(val)) parts.push('[' + val.join(', ') + ']');
+        else parts.push(val === null ? 'None' : String(val));
+      }
+    }
+    const line = parts.join(' ');
+    const sublines = line.split('\n');
+    for (const sl of sublines) output.push(sl);
+  }
+
+  if (!output.length) output.push('(no output — add print() to see results)');
+  return { success: true, output: output.join('\n'), lang: 'Python' };
+}
+
+function simulateJS(code) {
+  // For JavaScript, we can actually use the Function constructor safely
+  // since it's already in the browser. Intercept console.log.
+  const output = [];
+  try {
+    const originalLog = console.log;
+    const lines = [];
+    // Override console.log temporarily
+    const fakeLog = (...args) => {
+      lines.push(args.map(a => {
+        if (Array.isArray(a)) return '[' + a.join(', ') + ']';
+        if (a === null) return 'null';
+        if (a === undefined) return 'undefined';
+        return String(a);
+      }).join(' '));
+    };
+    // Sanitize: remove dangerous APIs
+    const safe = code
+      .replace(/\bfetch\b/g, 'void')
+      .replace(/\bXMLHttpRequest\b/g, 'Object')
+      .replace(/\blocalStorage\b/g, '{}')
+      .replace(/\bsessionStorage\b/g, '{}')
+      .replace(/\bdocument\b/g, '{}')
+      .replace(/\bwindow\b/g, '{}')
+      .replace(/\beval\b/g, 'void');
+    // eslint-disable-next-line no-new-func
+    new Function('console', safe)({ log: fakeLog, error: fakeLog, warn: fakeLog });
+    output.push(...lines);
+  } catch (err) {
+    return { success: false, error: err.message, lang: 'JavaScript' };
+  }
+  if (!output.length) output.push('(no output — add console.log() to see results)');
+  return { success: true, output: output.join('\n'), lang: 'JavaScript' };
+}
+
+function simulateJava(code) {
+  const tokens = tokenize(code);
+  const env = extractVars(tokens);
+  // Java: System.out.println / System.out.print / System.out.printf
+  // extractCalls finds 'println', 'print', 'printf' after skipping System.out
+  const calls = extractCalls(tokens, ['println', 'print', 'printf']);
+  const output = [];
+
+  for (const { fn, argTokens } of calls) {
+    const raw = argTokensToStr(argTokens);
+    const args = splitArgList(raw);
+    if (!args.length) { if (fn === 'println') output.push(''); continue; }
+
+    if (fn === 'printf') {
+      // Same as C printf
+      const firstTok = argTokens.find(t => t.type === 'string');
+      let fmt = firstTok ? firstTok.value : resolveArg(args[0], env);
+      const resolved = args.slice(1).map(a => resolveArg(a, env));
+      const line = applyFormatSpecifiers(String(fmt), resolved);
+      const parts = line.split('\n');
+      for (let k = 0; k < parts.length; k++) {
+        if (k < parts.length - 1) output.push(parts[k]);
+        else if (parts[k]) output.push(parts[k]);
+      }
+    } else {
+      // println / print: concat all args with + operator already evaluated
+      const resolved = resolveArg(args[0], env);
+      const line = resolved === null ? 'null' : String(resolved);
+      const parts = line.split('\n');
+      for (const sl of parts) {
+        if (sl !== '' || fn === 'println') output.push(sl);
+      }
+      if (fn === 'println' && !line.endsWith('\n') && parts[parts.length-1] === '') {
+        // already pushed empty above
+      }
+    }
+  }
+
+  if (!output.length) output.push('(no output — add System.out.println() to see results)');
+  return { success: true, output: output.join('\n'), lang: 'Java' };
+}
+
+// ============================================================
+// COMPILER TEMPLATES (starter code only — simulate fns above)
+// ============================================================
+const compilerTemplates = {
+  c: {
+    filename: 'main.c',
+    code: `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+
+    // Try modifying this code
+    int x = 10;
+    int y = 20;
+    printf("Sum: %d\\n", x + y);
+
+    return 0;
+}`,
+    simulate: simulateC
+  },
+  cpp: {
+    filename: 'main.cpp',
+    code: `#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, C++!" << endl;
+
+    // Variables and arithmetic
+    int a = 15, b = 4;
+    cout << "a + b = " << (a + b) << endl;
+    cout << "a / b = " << (a / b) << endl;
+
+    return 0;
+}`,
+    simulate: simulateCpp
+  },
+  python: {
+    filename: 'main.py',
+    code: `# Python playground
+print("Hello, Python!")
+
+# Lists and loops
+fruits = ["apple", "banana", "mango"]
+for fruit in fruits:
+    print(f"I like {fruit}")
+
+# Simple calculation
+result = 55
+print(f"Sum 1-10: {result}")`,
+    simulate: simulatePython
+  },
+  js: {
+    filename: 'main.js',
+    code: `// JavaScript playground
+console.log("Hello, JavaScript!");
+
+// Array methods
+const numbers = [3, 1, 4, 1, 5, 9, 2, 6];
+const evens = numbers.filter(n => n % 2 === 0);
+console.log("Even numbers:", evens);
+
+// Template literals
+const name = "Algorius";
+console.log(\`Welcome to \${name}!\`);`,
+    simulate: simulateJS
+  },
+  java: {
+    filename: 'Main.java',
+    code: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+
+        // Variables
+        int x = 10;
+        double pi = 3.14159;
+        String name = "Algorius";
+
+        System.out.println("Name: " + name);
+        System.out.println("x = " + x);
+        System.out.printf("Pi = %.2f%n", pi);
+    }
+}`,
+    simulate: simulateJava
+  }
+};
+
+let currentCompilerLang = 'c';
+
+function initCompiler() {
+  const editor = document.getElementById('compiler-code-editor');
+  if (!editor) return;
+  const tpl = compilerTemplates[currentCompilerLang];
+  editor.textContent = tpl.code;
+  document.getElementById('compiler-filename').textContent = tpl.filename;
+}
+
+function switchCompilerLang(lang, btn) {
+  currentCompilerLang = lang;
+  document.querySelectorAll('.clang-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const tpl = compilerTemplates[lang];
+  const editor = document.getElementById('compiler-code-editor');
+  if (editor) editor.textContent = tpl.code;
+  const fn = document.getElementById('compiler-filename');
+  if (fn) fn.textContent = tpl.filename;
+  clearCompilerOutput();
+}
+
+function runCompilerCode() {
+  const editor = document.getElementById('compiler-code-editor');
+  const outputBody = document.getElementById('compiler-output-body');
+  if (!editor || !outputBody) return;
+
+  outputBody.innerHTML = '<span style="color:var(--text-muted)">Compiling…</span>';
+  showToast('▶ Running…');
+
+  const code = editor.textContent || editor.innerText || '';
+  const tpl = compilerTemplates[currentCompilerLang];
+
+  setTimeout(() => {
+    const result = tpl.simulate(code);
+    if (result.success) {
+      outputBody.innerHTML =
+        `<span style="color:var(--green)">✓ Compiled (${result.lang}) — Process exited with code 0</span>\n` +
+        `<span style="color:var(--text-dim)">─────────────────────────────────────</span>\n` +
+        `<span style="color:var(--text)">${escHtml(result.output)}</span>`;
+    } else {
+      outputBody.innerHTML = `<span style="color:var(--red)">✗ Error: ${escHtml(result.error)}</span>`;
+    }
+    showToast('✓ Done');
+  }, 400);
+}
+
+function resetCompilerCode() {
+  const tpl = compilerTemplates[currentCompilerLang];
+  const editor = document.getElementById('compiler-code-editor');
+  if (editor) editor.textContent = tpl.code;
+  clearCompilerOutput();
+  showToast('↺ Reset');
+}
+
+function clearCompilerOutput() {
+  const ob = document.getElementById('compiler-output-body');
+  if (ob) ob.innerHTML = '<span class="compiler-output-placeholder">// Click "Run" to execute your code</span>';
+}
+
+// ============================================================
+// IMPROVED EXERCISE RUNNER (language-aware)
+// ============================================================
+function runCode() {
+  const editor  = document.getElementById('code-editor');
+  const output  = document.getElementById('editor-output');
+  const content = document.getElementById('eo-content');
+  if (!editor || !output || !content) return;
+
+  output.style.display = 'block';
+  content.innerHTML = '<span style="color:var(--text-muted)">Running…</span>';
+  showToast('▶ Running code…');
+
+  const code     = editor.textContent || editor.innerText || '';
+  const expected = editor.dataset.expected || '';
+  const langTag  = editor.dataset.course || '// c';
+
+  // Detect language from course tag
+  let lang = 'c';
+  if (langTag.includes('python')) lang = 'python';
+  else if (langTag.includes('c++') || langTag.includes('cpp')) lang = 'cpp';
+  else if (langTag.includes('js') || langTag.includes('javascript')) lang = 'js';
+  else if (langTag.includes('java') && !langTag.includes('javascript')) lang = 'java';
+  else if (langTag.includes('html')) lang = 'html';
+  else if (langTag.includes('sql')) lang = 'sql';
+
+  setTimeout(() => {
+    let outputLines = '';
+
+    if (lang === 'html') {
+      outputLines = '<span style="color:var(--text-muted); font-style:italic">HTML renders in browser — your markup looks valid!</span>';
+    } else if (lang === 'sql') {
+      outputLines = '<span style="color:var(--text-muted); font-style:italic">SQL executed — query returned simulated results.</span>';
+    } else if (compilerTemplates[lang]) {
+      const result = compilerTemplates[lang].simulate(code);
+      outputLines = `<span style="color:var(--text)">${escHtml(result.output)}</span>`;
+    } else {
+      // fallback: show expected
+      const lines = expected.split('\\n');
+      outputLines = lines.map(l => `<span style="color:var(--text)">${escHtml(l)}</span>`).join('\n');
+    }
+
+    content.innerHTML =
+      `<span style="color:var(--green)">✓ Compiled successfully</span>\n` +
+      `<span style="color:var(--text-dim)">─────────────────</span>\n` +
+      outputLines +
+      `\n<span style="color:var(--text-dim)">Process exited with code 0</span>`;
+    showToast('✓ Code ran');
+  }, 500);
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+const leaderboardData = {
+  all: [
+    { rank:1, name:'ByteWizard',   nim:'231402001', lang:'Python',  exercises:142, xp:7100, streak:45, avatar:'B' },
+    { rank:2, name:'CodeNinja',    nim:'231402017', lang:'C++',     exercises:128, xp:6400, streak:32, avatar:'C' },
+    { rank:3, name:'PixelCoder',   nim:'231402034', lang:'Java',    exercises:119, xp:5950, streak:28, avatar:'P' },
+    { rank:4, name:'AlgoQueen',    nim:'231402008', lang:'C',       exercises:104, xp:5200, streak:21, avatar:'A' },
+    { rank:5, name:'NullPointer',  nim:'231402025', lang:'Python',  exercises:97,  xp:4850, streak:14, avatar:'N' },
+    { rank:6, name:'DebugHero',    nim:'231402041', lang:'JS',      exercises:89,  xp:4450, streak:18, avatar:'D' },
+    { rank:7, name:'RecursiveKid', nim:'231402012', lang:'C',       exercises:76,  xp:3800, streak:7,  avatar:'R' },
+    { rank:8, name:'SQLMaster',    nim:'231402056', lang:'SQL',     exercises:68,  xp:3400, streak:11, avatar:'S' },
+    { rank:9, name:'HTMLHero',     nim:'231402063', lang:'HTML',    exercises:61,  xp:3050, streak:5,  avatar:'H' },
+    { rank:10,name:'LoopBreaker',  nim:'231402019', lang:'C++',     exercises:55,  xp:2750, streak:9,  avatar:'L' },
+  ],
+  month: [
+    { rank:1, name:'AlgoQueen',    nim:'231402008', lang:'C',       exercises:52,  xp:2600, streak:21, avatar:'A' },
+    { rank:2, name:'ByteWizard',   nim:'231402001', lang:'Python',  exercises:48,  xp:2400, streak:18, avatar:'B' },
+    { rank:3, name:'DebugHero',    nim:'231402041', lang:'JS',      exercises:39,  xp:1950, streak:12, avatar:'D' },
+    { rank:4, name:'CodeNinja',    nim:'231402017', lang:'C++',     exercises:35,  xp:1750, streak:9,  avatar:'C' },
+    { rank:5, name:'PixelCoder',   nim:'231402034', lang:'Java',    exercises:28,  xp:1400, streak:7,  avatar:'P' },
+    { rank:6, name:'NullPointer',  nim:'231402025', lang:'Python',  exercises:22,  xp:1100, streak:5,  avatar:'N' },
+    { rank:7, name:'SQLMaster',    nim:'231402056', lang:'SQL',     exercises:19,  xp: 950, streak:4,  avatar:'S' },
+    { rank:8, name:'RecursiveKid', nim:'231402012', lang:'C',       exercises:16,  xp: 800, streak:3,  avatar:'R' },
+  ],
+  week: [
+    { rank:1, name:'DebugHero',    nim:'231402041', lang:'JS',      exercises:14,  xp: 700, streak:7,  avatar:'D' },
+    { rank:2, name:'ByteWizard',   nim:'231402001', lang:'Python',  exercises:11,  xp: 550, streak:5,  avatar:'B' },
+    { rank:3, name:'AlgoQueen',    nim:'231402008', lang:'C',       exercises:9,   xp: 450, streak:4,  avatar:'A' },
+    { rank:4, name:'HTMLHero',     nim:'231402063', lang:'HTML',    exercises:7,   xp: 350, streak:3,  avatar:'H' },
+    { rank:5, name:'LoopBreaker',  nim:'231402019', lang:'C++',     exercises:5,   xp: 250, streak:2,  avatar:'L' },
+  ]
+};
+
+let currentLBFilter = 'all';
+
+function initLeaderboard() {
+  renderLeaderboard('all');
+}
+
+function filterLeaderboard(filter, btn) {
+  currentLBFilter = filter;
+  document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderLeaderboard(filter);
+}
+
+function renderLeaderboard(filter) {
+  const data = leaderboardData[filter] || leaderboardData.all;
+  renderPodium(data.slice(0, 3));
+  renderTable(data);
+}
+
+function renderPodium(top3) {
+  const el = document.getElementById('lb-podium');
+  if (!el || top3.length < 3) return;
+  const medals = ['🥇','🥈','🥉'];
+  const classes = ['lb-podium-1st', 'lb-podium-2nd', 'lb-podium-3rd'];
+  const ranks = ['#1', '#2', '#3'];
+  el.innerHTML = top3.map((u, i) => `
+    <div class="lb-podium-card ${classes[i]}">
+      <span class="lb-podium-rank">${ranks[i]}</span>
+      <span class="lb-podium-crown">${medals[i]}</span>
+      <div class="lb-podium-avatar">${u.avatar}</div>
+      <span class="lb-podium-name">${u.name}</span>
+      <span class="lb-podium-nim" style="font-size:11px;color:var(--text-dim)">${u.nim}</span>
+      <span class="lb-podium-lang">${u.lang}</span>
+      <span class="lb-podium-xp">${u.xp.toLocaleString()} XP</span>
+    </div>
+  `).join('');
+}
+
+function renderTable(data) {
+  const el = document.getElementById('lb-table-body');
+  if (!el) return;
+  // skip top 3 already shown in podium
+  const rows = data.slice(3);
+  if (!rows.length) {
+    el.innerHTML = '<div style="padding:24px; text-align:center; color:var(--text-dim); font-size:13px;">No more entries for this period.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(u => `
+    <div class="lb-row">
+      <span class="lb-row-rank ${u.rank <= 3 ? 'top3' : ''}">#${u.rank}</span>
+      <div class="lb-row-user">
+        <div class="lb-row-avatar">${u.avatar}</div>
+        <div>
+          <div class="lb-row-name">${u.name}</div>
+          <div class="lb-row-sub">${u.nim}</div>
+        </div>
+      </div>
+      <span class="lb-row-lang-badge">${u.lang}</span>
+      <span class="lb-row-exercises">${u.exercises}</span>
+      <span class="lb-row-xp">${u.xp.toLocaleString()}</span>
+      <span class="lb-row-streak ${u.streak >= 14 ? 'hot' : ''}">🔥 ${u.streak}d</span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ABOUT TEAM
+// ============================================================
+const teamMembers = [
+  { name: 'Ketua Tim',       nim: '231402XXX', role: 'Team Lead',        avatar: 'K' },
+  { name: 'Anggota 1',       nim: '231402XXX', role: 'Frontend Dev',     avatar: 'A' },
+  { name: 'Anggota 2',       nim: '231402XXX', role: 'UI/UX Designer',   avatar: 'B' },
+  { name: 'Anggota 3',       nim: '231402XXX', role: 'Content Writer',   avatar: 'C' },
+];
+
+function initAboutTeam() {
+  const el = document.getElementById('about-team-grid');
+  if (!el) return;
+  el.innerHTML = teamMembers.map(m => `
+    <div class="about-team-card">
+      <div class="about-team-avatar">${m.avatar}</div>
+      <div class="about-team-name">${m.name}</div>
+      <span class="about-team-role">${m.role}</span>
+      <span class="about-team-nim">${m.nim}</span>
+    </div>
+  `).join('');
+}
