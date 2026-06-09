@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorius — Code With Purpose</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== SCROLL PROGRESS BAR ===== -->
+<div id="scroll-progress"></div>
+
+<!-- ===== NAV ===== -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <a href="#" class="logo" onclick="showPage('home'); return false;">
+        <span class="logo-icon">⟨/⟩</span>
+        <span class="logo-text">algorius</span>
+      </a>
+      <div class="courses-dropdown">
+        <button class="nav-courses-btn" onclick="toggleDropdown()">
+          Courses <span class="arrow" id="drop-arrow">▾</span>
+        </button>
+        <div class="dropdown-menu" id="dropdown-menu">
+          <a onclick="showPage('courses')">All Courses</a>
+          <div class="dropdown-divider"></div>
+          <a onclick="showCourse('c')">C Programming</a>
+          <a onclick="showCourse('cpp')">C++</a>
+          <a onclick="showCourse('python')">Python</a>
+          <a onclick="showCourse('html')">HTML</a>
+          <a onclick="showCourse('css')">CSS</a>
+          <a onclick="showCourse('js')">JavaScript</a>
+          <a onclick="showCourse('sql')">SQL</a>
+          <a onclick="showCourse('java')">Java</a>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a class="nav-link" onclick="showPage('compiler')">
+          <span class="nav-link-icon">▶</span> Compiler
+        </a>
+        <a class="nav-link" onclick="showPage('leaderboard')">
+          <span class="nav-link-icon"></span> Leaderboard
+        </a>
+        <a class="nav-link" onclick="showPage('about')">About Us</a>
+      </nav>
+    </div>
+    <div class="nav-right" id="nav-right">
+      <a href="#" class="btn-ghost" onclick="showPage('auth'); return false;">Sign In</a>
+      <a href="#" class="btn-primary" onclick="showPage('pricing'); return false;">Get Started</a>
+    </div>
+    <!-- Hamburger (mobile) -->
+    <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
+  </div>
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a onclick="showPage('home'); closeMobileMenu()">Home</a>
+    <a onclick="showPage('courses'); closeMobileMenu()">All Courses</a>
+    <a onclick="showPage('compiler'); closeMobileMenu()">▶ Compiler</a>
+    <a onclick="showPage('leaderboard'); closeMobileMenu()">Leaderboard</a>
+    <a onclick="showPage('about'); closeMobileMenu()">About Us</a>
+    <div class="mobile-menu-divider"></div>
+    <a onclick="showCourse('c'); closeMobileMenu()">C Programming</a>
+    <a onclick="showCourse('cpp'); closeMobileMenu()">C++</a>
+    <a onclick="showCourse('python'); closeMobileMenu()">Python</a>
+    <a onclick="showCourse('html'); closeMobileMenu()">HTML</a>
+    <a onclick="showCourse('css'); closeMobileMenu()">CSS</a>
+    <a onclick="showCourse('js'); closeMobileMenu()">JavaScript</a>
+    <a onclick="showCourse('sql'); closeMobileMenu()">SQL</a>
+    <a onclick="showCourse('java'); closeMobileMenu()">Java</a>
+    <div class="mobile-menu-divider"></div>
+    <a onclick="showPage('pricing'); closeMobileMenu()">Pricing</a>
+    <a onclick="showPage('auth'); closeMobileMenu()">Sign In / Sign Up</a>
+  </div>
+</nav>
+
+<!-- ===== PAGE: HOME ===== -->
+<div id="page-home" class="page active">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="code-rain" id="code-rain"></div>
+      <div class="hero-glow"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Your Journey to Programming Expert
+      </div>
+      <h1 class="hero-title">
+        Code With Purpose,<br />Learn With <span class="brand-accent">Algorius</span>
+      </h1>
+      <p class="hero-sub">A hands-on platform designed to turn beginners into architects</p>
+      <p class="hero-tagline">No Fluff, Just <span class="accent-green">Code</span></p>
+      <div class="hero-actions">
+        <button class="btn-hero-primary" onclick="showPage('auth')">Get Started for Free</button>
+        <button class="btn-hero-ghost" onclick="showPage('courses')">Browse Courses →</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">8+</span><span class="stat-label">Courses</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">1K+</span><span class="stat-label">Students</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">Free</span><span class="stat-label">To Start</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Courses -->
+  <section class="featured">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// featured</span>
+        <h2 class="section-title">Featured Courses</h2>
+        <p class="section-sub">Start with the most popular paths</p>
+      </div>
+      <div class="featured-list">
+
+        <div class="featured-card" onclick="showCourse('c')">
+          <div class="fc-icon">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" alt="C" />
+          </div>
+          <div class="fc-body">
+            <h3>C Programming Language</h3>
+            <p>Master the foundation of all programming. From variables and loops to pointers and data structures — build the logic that carries you everywhere.</p>
+            <div class="fc-meta">
+              <span class="fc-badge beginner">Beginner</span>
+              <span class="fc-lessons">6 modules</span>
+            </div>
+          </div>
+          <div class="fc-arrow">→</div>
+        </div>
+
+        <div class="featured-card" onclick="showCourse('python')">
+          <div class="fc-icon">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" />
+          </div>
+          <div class="fc-body">
+            <h3>Python</h3>
+            <p>Clean syntax, powerful libraries, and endless possibilities. Python is the go-to language for data, automation, and modern backends.</p>
+            <div class="fc-meta">
+              <span class="fc-badge beginner">Beginner</span>
+              <span class="fc-lessons">8 modules</span>
+            </div>
+          </div>
+          <div class="fc-arrow">→</div>
+        </div>
+
+        <div class="featured-card featured-card--alt" onclick="showCourse('cpp')">
+          <div class="fc-icon">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" alt="C++" />
+          </div>
+          <div class="fc-body">
+            <h3>C++ Programming</h3>
+            <p>Level up from C into object-oriented mastery. Classes, STL, memory management, and competitive programming — all covered.</p>
+            <div class="fc-meta">
+              <span class="fc-badge intermediate">Intermediate</span>
+              <span class="fc-lessons">7 modules</span>
+            </div>
+          </div>
+          <div class="fc-arrow">→</div>
+        </div>
+
+      </div>
+      <div class="featured-cta">
+        <button class="btn-outline" onclick="showPage('courses')">View All Courses</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Algorius -->
+  <section class="why">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// why algorius</span>
+        <h2 class="section-title">Built Different</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">⚡</div>
+          <h4>Hands-on Learning</h4>
+          <p>Every lesson includes real exercises. No passive watching — you write code from day one.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🎯</div>
+          <h4>Structured Paths</h4>
+          <p>Courses are carefully sequenced so each concept builds on the last. No confusion.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">💻</div>
+          <h4>In-Browser Coding</h4>
+          <p>Write, run, and submit code directly in your browser. Zero setup required.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🚀</div>
+          <h4>Free to Start</h4>
+          <p>Access core courses for free. Upgrade only when you're ready to go deeper.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('about')">About Us</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ===== PAGE: AUTH ===== -->
+<div id="page-auth" class="page">
+  <div class="auth-wrapper">
+    <div class="auth-left">
+      <div class="auth-brand">
+        <span class="logo-icon">⟨/⟩</span>
+        <span class="logo-text">algorius</span>
+      </div>
+      <h2 class="auth-tagline">Start coding.<br/>Build things.<br/><span class="accent-green">Ship something.</span></h2>
+      <div class="auth-code-block">
+        <pre><span class="code-kw">int</span> <span class="code-fn">main</span>() {
+  <span class="code-kw">while</span> (learning) {
+    <span class="code-fn">grow</span>();
+    <span class="code-fn">build</span>();
+    <span class="code-fn">repeat</span>();
+  }
+  <span class="code-kw">return</span> <span class="code-num">success</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+        <button class="auth-tab" id="tab-login" onclick="switchTab('login')">Login</button>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div id="form-signup" class="auth-form active">
+        <h3>Create your Account</h3>
+        <p class="form-sub">Join thousands of learners already on Algorius</p>
+        <div class="input-group">
+          <label for="su-username">Username</label>
+          <input id="su-username" type="text" placeholder="your_username" autocomplete="username" />
+          <span class="field-error" id="err-su-username"></span>
+        </div>
+        <div class="input-group">
+          <label for="su-password">Password</label>
+          <input id="su-password" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <span class="field-error" id="err-su-password"></span>
+        </div>
+        <div class="input-group">
+          <label for="su-confirm">Confirm Password</label>
+          <input id="su-confirm" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <span class="field-error" id="err-su-confirm"></span>
+        </div>
+        <div class="input-group">
+          <label for="su-email">Email</label>
+          <input id="su-email" type="email" placeholder="you@example.com" autocomplete="email" />
+          <span class="field-error" id="err-su-email"></span>
+        </div>
+        <label class="checkbox-label">
+          <input id="su-agree" type="checkbox" />
+          <span>I agree to <a href="#">Algorius' Terms</a> and <a href="#">Privacy Policy</a></span>
+        </label>
+        <span class="field-error" id="err-su-agree"></span>
+        <button class="btn-form-primary" onclick="validateSignup()">REGISTER</button>
+        <p class="form-switch">Already have an account? <a onclick="switchTab('login')">Login here</a></p>
+      </div>
+
+      <!-- Login Form -->
+      <div id="form-login" class="auth-form">
+        <h3>Welcome back</h3>
+        <p class="form-sub">Continue your learning journey</p>
+        <div class="input-group">
+          <label for="li-identifier">Username or Email</label>
+          <input id="li-identifier" type="text" placeholder="you@example.com" autocomplete="username" />
+          <span class="field-error" id="err-li-identifier"></span>
+        </div>
+        <div class="input-group">
+          <label for="li-password">Password</label>
+          <input id="li-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+          <span class="field-error" id="err-li-password"></span>
+        </div>
+        <a href="#" class="forgot-link">Forgot Password?</a>
+        <button class="btn-form-primary" onclick="validateLogin()">LOGIN</button>
+        <p class="form-switch">Don't have an account? <a onclick="switchTab('signup')">Sign up free</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: COURSES ===== -->
+<div id="page-courses" class="page">
+  <div class="container">
+    <div class="courses-hero">
+      <div class="breadcrumb">
+        <span class="bc-link" onclick="showPage('home')">Home</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">All Courses</span>
+      </div>
+      <span class="section-tag">// all courses</span>
+      <h2 class="section-title">All Courses</h2>
+      <p class="section-sub">Pick your language. Start your journey.</p>
+    </div>
+    <div class="courses-grid">
+
+      <div class="course-card" onclick="showCourse('c')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" alt="C" class="cc-icon" />
+          <span class="cc-badge free">Free</span>
+        </div>
+        <h4>C Programming</h4>
+        <p>The foundation of software engineering.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">6 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('cpp')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" alt="C++" class="cc-icon" />
+          <span class="cc-badge premium">Premium</span>
+        </div>
+        <h4>C++ Programming</h4>
+        <p>Object-oriented mastery and performance.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">7 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('python')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" class="cc-icon" />
+          <span class="cc-badge free">Free</span>
+        </div>
+        <h4>Python</h4>
+        <p>Versatile, readable, and powerful.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">8 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('html')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="HTML" class="cc-icon" />
+          <span class="cc-badge free">Free</span>
+        </div>
+        <h4>HTML</h4>
+        <p>The building block of every website.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">5 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('css')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" alt="CSS" class="cc-icon" />
+          <span class="cc-badge free">Free</span>
+        </div>
+        <h4>CSS</h4>
+        <p>Style the web with color, layout, and animation.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">7 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('js')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JS" class="cc-icon" />
+          <span class="cc-badge premium">Premium</span>
+        </div>
+        <h4>JavaScript</h4>
+        <p>Make the web interactive and alive.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">9 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('sql')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" alt="SQL" class="cc-icon" />
+          <span class="cc-badge premium">Premium</span>
+        </div>
+        <h4>SQL</h4>
+        <p>Query, manage, and master databases.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">6 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+      <div class="course-card" onclick="showCourse('java')">
+        <div class="cc-top">
+          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java" class="cc-icon" />
+          <span class="cc-badge premium">Premium</span>
+        </div>
+        <h4>Java</h4>
+        <p>Robust, cross-platform object-oriented programming.</p>
+        <div class="cc-footer">
+          <span class="cc-modules">8 modules</span>
+          <span class="cc-start">Start →</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pricing CTA -->
+    <div class="pricing-banner">
+      <div class="pb-text">
+        <span class="pb-tag">🔒 Premium Content</span>
+        <h3>Unlock Everything with Algorius Premium</h3>
+        <p>Rp. 50,000/month — unlimited access to all courses, projects, and coding challenges.</p>
+      </div>
+      <button class="btn-primary" onclick="showPage('pricing')">View Pricing →</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('about')">About Us</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PAGE: PRICING ===== -->
+<div id="page-pricing" class="page">
+  <div class="container">
+    <div class="page-header">
+      <div class="breadcrumb" style="justify-content:center;">
+        <span class="bc-link" onclick="showPage('home')">Home</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">Pricing</span>
+      </div>
+      <div class="section-header" style="margin-bottom:3rem;">
+        <span class="section-tag">// pricing</span>
+        <h2 class="section-title">Our Pricing Plans</h2>
+        <p class="section-sub">Choose a plan that works for you.</p>
+      </div>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pc-header">
+          <span class="pc-plan">Free Plan</span>
+          <div class="pc-price">
+            <span class="pc-currency">Rp.</span>
+            <span class="pc-amount">0</span>
+            <span class="pc-per">,–</span>
+          </div>
+        </div>
+        <ul class="pc-features">
+          <li><span class="check">✓</span> Access basic coding courses</li>
+          <li><span class="check">✓</span> Perfect for beginners starting out</li>
+          <li><span class="check">✓</span> Learn coding basics at no cost</li>
+          <li><span class="check">✓</span> Basic access to courses, quizzes and practice</li>
+        </ul>
+        <button class="btn-outline" onclick="showPage('auth')">Try Algorius for Free</button>
+      </div>
+
+      <div class="pricing-card pricing-card--featured">
+        <div class="pc-popular">Most Popular</div>
+        <div class="pc-header">
+          <span class="pc-plan">Premium Plan</span>
+          <div class="pc-price">
+            <span class="pc-currency">Rp.</span>
+            <span class="pc-amount">50,000</span>
+            <span class="pc-per">,–/mo</span>
+          </div>
+        </div>
+        <ul class="pc-features">
+          <li><span class="check">✓</span> Unlimited access to all courses</li>
+          <li><span class="check">✓</span> Advanced coding projects and challenges</li>
+          <li><span class="check">✓</span> Full access to quizzes and coding challenges</li>
+          <li><span class="check">✓</span> Exclusive premium content</li>
+          <li><span class="check">✓</span> Priority support</li>
+        </ul>
+        <button class="btn-hero-primary" onclick="showPage('payment')">Get Algorius Pro</button>
+      </div>
+    </div>
+
+    <!-- FAQ teaser -->
+    <div class="pricing-faq">
+      <div class="faq-item">
+        <div class="faq-q">Can I switch plans later?</div>
+        <div class="faq-a">Yes — upgrade or downgrade anytime. No contracts, no hidden fees.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is there a refund policy?</div>
+        <div class="faq-a">We offer a 7-day money-back guarantee if you're not satisfied.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What payment methods are accepted?</div>
+        <div class="faq-a">DANA, ShopeePay, OVO, and QRIS are all supported.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('about')">About Us</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PAGE: PAYMENT ===== -->
+<div id="page-payment" class="page">
+  <div class="payment-wrapper">
+    <div class="payment-card">
+      <div class="payment-breadcrumb">
+        <span class="bc-link" onclick="showPage('pricing')">← Back to Pricing</span>
+      </div>
+      <h2 class="payment-title">Complete Payment</h2>
+      <div class="payment-summary">
+        <div class="ps-row">
+          <span>Premium Plan</span>
+          <span>Rp. 50,000,–</span>
+        </div>
+        <div class="ps-row">
+          <span>Tax (3%)</span>
+          <span>Rp. 1,500,–</span>
+        </div>
+        <div class="ps-divider"></div>
+        <div class="ps-row ps-total">
+          <span>Total</span>
+          <span>Rp. 51,500,–</span>
+        </div>
+      </div>
+
+      <div class="payment-methods">
+        <p class="pm-label">Payment Method:</p>
+        <div class="pm-grid">
+          <button class="pm-btn active" data-method="dana">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgODAiPgogIDxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iODAiIHJ4PSI0MCIgZmlsbD0iIzExOEVFQSIvPgogIDx0ZXh0IHg9IjEwMCIgeT0iNTQiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjayxIZWx2ZXRpY2EgTmV1ZSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjM2IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgbGV0dGVyLXNwYWNpbmc9IjQiPkRBTkE8L3RleHQ+Cjwvc3ZnPg==" alt="DANA" class="pm-logo" />
+            <span>DANA</span>
+          </button>
+          <button class="pm-btn" data-method="shopeepay">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAgNTAiPgogIDxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iNTAiIHJ4PSI4IiBmaWxsPSIjRUU0RDJEIi8+CiAgPCEtLSBTaG9wZWUgYmFnIHNpbXBsaWZpZWQgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQsNykiPgogICAgPHJlY3QgeD0iMCIgeT0iMTAiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxOCIgcng9IjMiIGZpbGw9IndoaXRlIi8+CiAgICA8cGF0aCBkPSJNNCAxMCBDNCA0IDE4IDQgMTggMTAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMi41IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxjaXJjbGUgY3g9IjciIGN5PSIxNyIgcj0iMiIgZmlsbD0iI0VFNEQyRCIvPgogICAgPGNpcmNsZSBjeD0iMTUiIGN5PSIxNyIgcj0iMiIgZmlsbD0iI0VFNEQyRCIvPgogIDwvZz4KICA8dGV4dCB4PSI0OCIgeT0iMjIiIGZvbnQtZmFtaWx5PSJBcmlhbCxIZWx2ZXRpY2EgTmV1ZSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSJ3aGl0ZSI+U2hvcGVlPC90ZXh0PgogIDx0ZXh0IHg9IjQ4IiB5PSIzOCIgZm9udC1mYW1pbHk9IkFyaWFsLEhlbHZldGljYSBOZXVlLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IndoaXRlIj5QYXk8L3RleHQ+Cjwvc3ZnPg==" alt="ShopeePay" class="pm-logo" />
+            <span>ShopeePay</span>
+          </button>
+          <button class="pm-btn" data-method="ovo">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgODAiPgogIDxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iODAiIHJ4PSI0MCIgZmlsbD0iIzRDMzQ5NCIvPgogIDx0ZXh0IHg9IjkwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLEhlbHZldGljYSBOZXVlLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBsZXR0ZXItc3BhY2luZz0iNCI+T1ZPPC90ZXh0Pgo8L3N2Zz4=" alt="OVO" class="pm-logo" />
+            <span>OVO</span>
+          </button>
+          <button class="pm-btn" data-method="qris">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="pm-logo" style="filter:brightness(0) invert(1);" />
+            <span>QRIS</span>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-form-primary" onclick="showPaymentSuccess()">PAY NOW — Rp. 51,500</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: COURSE DETAIL ===== -->
+<div id="page-course-detail" class="page">
+  <div class="container">
+    <div class="breadcrumb" style="padding-top:80px; margin-bottom:4px;">
+      <span class="bc-link" onclick="showPage('home')">Home</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-link" onclick="showPage('courses')">Courses</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current" id="cd-breadcrumb">Course</span>
+    </div>
+    <button class="back-btn" onclick="showPage('courses')">← Back to Courses</button>
+    <div class="cd-hero">
+      <div class="cd-icon" id="cd-icon"></div>
+      <div class="cd-info">
+        <span class="section-tag" id="cd-tag">//course</span>
+        <h2 id="cd-title">Course Title</h2>
+        <p id="cd-desc">Course description here.</p>
+        <div class="cd-meta-row">
+          <span class="cd-level-badge" id="cd-level-badge">Beginner</span>
+          <span class="cd-stat"><span id="cd-modules-count">6</span> modules</span>
+          <span class="cd-stat" id="cd-access-badge">Free</span>
+        </div>
+        <div class="cd-actions">
+          <button class="btn-hero-primary" id="cd-enroll-btn" onclick="showLesson()">Start Learning →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cd-curriculum">
+      <h3>Curriculum</h3>
+      <div class="curriculum-list" id="curriculum-list"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PAGE: LESSON ===== -->
+<div id="page-lesson" class="page">
+  <!-- Mobile sidebar toggle -->
+  <div class="lesson-mobile-bar">
+    <button class="lesson-mob-toggle" id="lesson-mob-toggle" onclick="toggleLessonSidebar()">☰ Modules</button>
+    <span class="lesson-mob-course" id="lesson-mob-course">C</span>
+  </div>
+
+  <div class="lesson-layout">
+    <!-- Sidebar -->
+    <div class="lesson-sidebar" id="lesson-sidebar">
+      <div class="ls-header">
+        <div class="ls-header-top">
+          <div>
+            <span class="ls-lang" id="ls-lang">C</span>
+            <span class="ls-module" id="ls-module">Introduction To C</span>
+          </div>
+          <button class="ls-close" onclick="toggleLessonSidebar()" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div class="ls-nav" id="ls-nav">
+        <!-- populated by JS -->
+      </div>
+      <button class="ls-leave" onclick="showPage('course-detail')">← Leave Course</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lesson-main" id="lesson-main">
+
+      <!-- Video 1 -->
+      <div id="lesson-video1" class="lesson-content active">
+        <div class="lc-header">
+          <h2 class="lc-title" id="lc-title-video1">Introduction</h2>
+          <div class="lc-progress"><span id="lc-progress-label">Part 1 of 3</span></div>
+        </div>
+        <div class="video-container">
+          <div class="video-player" id="video-player-1">
+            <div class="vp-code-bg" id="vp-code-1">
+              <!-- populated by JS -->
+            </div>
+            <div class="vp-overlay" id="vp-overlay-1">
+              <button class="vp-play" id="play-btn1" onclick="togglePlay(1)">▶</button>
+            </div>
+            <div class="vp-bar">
+              <button class="vp-ctrl" onclick="togglePlay(1)" id="vp-ctrl-1">▶</button>
+              <div class="vp-progress-wrap">
+                <div class="vp-progress" onclick="seekVideo(event, 1)">
+                  <div class="vp-fill" id="vp-fill-1" style="width:0%"></div>
+                </div>
+              </div>
+              <span class="vp-time" id="vp-time-1">0:00 / 10:00</span>
+            </div>
+            <div class="vp-credit">Simulated lesson video</div>
+          </div>
+        </div>
+        <div class="lc-notes" id="lc-notes-video1">
+          <!-- notes populated by JS -->
+        </div>
+        <div class="lc-actions">
+          <button class="btn-nav-prev" onclick="switchLesson('video1', null)" style="display:none;">← Prev</button>
+          <button class="btn-nav-next" onclick="switchLesson('video2', null)">Next: Video 2 →</button>
+        </div>
+      </div>
+
+      <!-- Video 2 -->
+      <div id="lesson-video2" class="lesson-content">
+        <div class="lc-header">
+          <h2 class="lc-title" id="lc-title-video2">Deep Dive</h2>
+          <div class="lc-progress"><span id="lc-progress-label2">Part 2 of 3</span></div>
+        </div>
+        <div class="video-container">
+          <div class="video-player" id="video-player-2">
+            <div class="vp-code-bg" id="vp-code-2">
+              <!-- populated by JS -->
+            </div>
+            <div class="vp-overlay" id="vp-overlay-2">
+              <button class="vp-play" id="play-btn2" onclick="togglePlay(2)">▶</button>
+            </div>
+            <div class="vp-bar">
+              <button class="vp-ctrl" onclick="togglePlay(2)" id="vp-ctrl-2">▶</button>
+              <div class="vp-progress-wrap">
+                <div class="vp-progress" onclick="seekVideo(event, 2)">
+                  <div class="vp-fill" id="vp-fill-2" style="width:0%"></div>
+                </div>
+              </div>
+              <span class="vp-time" id="vp-time-2">0:00 / 10:00</span>
+            </div>
+            <div class="vp-credit">Simulated lesson video</div>
+          </div>
+        </div>
+        <div class="lc-notes" id="lc-notes-video2">
+          <!-- notes populated by JS -->
+        </div>
+        <div class="lc-actions">
+          <button class="btn-nav-prev" onclick="switchLesson('video1', null)">← Video 1</button>
+          <button class="btn-nav-next" onclick="switchLesson('exercise', null)">Next: Exercise →</button>
+        </div>
+      </div>
+
+      <!-- Exercise -->
+      <div id="lesson-exercise" class="lesson-content">
+        <div class="lc-header">
+          <h2 class="lc-title" id="lc-title-exercise">Exercise</h2>
+          <div class="lc-progress"><span>Part 3 of 3</span></div>
+        </div>
+        <div class="exercise-layout">
+          <div class="ex-instructions">
+            <h3 id="ex-title">Task</h3>
+            <div id="ex-desc" class="ex-desc"></div>
+            <div class="ex-hints" id="ex-hints"></div>
+          </div>
+          <div class="ex-editor">
+            <div class="editor-header">
+              <span class="editor-lang" id="editor-filename">main.c</span>
+              <div class="editor-controls">
+                <button class="editor-reset-btn" onclick="resetCode()" title="Reset code">↺</button>
+                <div class="editor-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+            <div class="editor-body" contenteditable="true" spellcheck="false" id="code-editor"></div>
+            <div class="editor-output" id="editor-output" style="display:none">
+              <div class="eo-header">
+                <span>Output</span>
+                <button class="eo-close" onclick="closeOutput()">✕</button>
+              </div>
+              <div class="eo-content" id="eo-content"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ex-actions">
+          <button class="btn-run" onclick="runCode()">▶ Run Code</button>
+          <button class="btn-submit" onclick="submitCode()">Submit →</button>
+          <button class="btn-nav-prev ex-back-btn" onclick="switchLesson('video2', null)">← Video 2</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: COMPILER ===== -->
+<div id="page-compiler" class="page">
+  <div class="compiler-page">
+    <div class="container">
+      <div class="compiler-header">
+        <div class="breadcrumb">
+          <span class="bc-link" onclick="showPage('home')">Home</span>
+          <span class="bc-sep">/</span>
+          <span class="bc-current">Online Compiler</span>
+        </div>
+        <div class="compiler-title-row">
+          <div>
+            <span class="section-tag">// online compiler</span>
+            <h2 class="section-title compiler-h2">Code, Run, Learn</h2>
+            <p class="section-sub">Write and run code instantly — no setup required.</p>
+          </div>
+          <div class="compiler-lang-select-wrap">
+            <label class="compiler-lang-label">Language:</label>
+            <div class="compiler-lang-tabs" id="compiler-lang-tabs">
+              <button class="clang-tab active" data-lang="c" onclick="switchCompilerLang('c', this)">C</button>
+              <button class="clang-tab" data-lang="cpp" onclick="switchCompilerLang('cpp', this)">C++</button>
+              <button class="clang-tab" data-lang="python" onclick="switchCompilerLang('python', this)">Python</button>
+              <button class="clang-tab" data-lang="js" onclick="switchCompilerLang('js', this)">JavaScript</button>
+              <button class="clang-tab" data-lang="java" onclick="switchCompilerLang('java', this)">Java</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compiler-layout">
+        <!-- Editor Panel -->
+        <div class="compiler-editor-panel">
+          <div class="editor-header">
+            <span class="editor-lang" id="compiler-filename">main.c</span>
+            <div class="editor-controls">
+              <button class="editor-reset-btn" onclick="resetCompilerCode()" title="Reset to template">↺ Reset</button>
+              <div class="editor-dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="compiler-editor-body editor-body" contenteditable="true" spellcheck="false" id="compiler-code-editor"></div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="compiler-output-panel">
+          <div class="compiler-output-header">
+            <span class="compiler-output-title">Output</span>
+            <div class="compiler-output-controls">
+              <button class="btn-run" onclick="runCompilerCode()">▶ Run</button>
+              <button class="compiler-clear-btn" onclick="clearCompilerOutput()">Clear</button>
+            </div>
+          </div>
+          <div class="compiler-output-body" id="compiler-output-body">
+            <span class="compiler-output-placeholder">// Click "Run" to execute your code</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip bar -->
+      <div class="compiler-tips">
+        <span class="compiler-tip-label">💡 Tips:</span>
+        <span>This is a simulated compiler — great for learning syntax and logic.</span>
+        <span class="compiler-tip-sep">·</span>
+        <span>Each language has a starter template to get you going.</span>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <span class="logo-icon">⟨/⟩</span>
+            <span class="logo-text">algorius</span>
+          </div>
+          <nav class="footer-links">
+            <a onclick="showPage('home')">Home</a>
+            <a onclick="showPage('courses')">Courses</a>
+            <a onclick="showPage('leaderboard')">Leaderboard</a>
+            <a onclick="showPage('about')">About Us</a>
+          </nav>
+          <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ===== PAGE: LEADERBOARD ===== -->
+<div id="page-leaderboard" class="page">
+  <div class="container">
+    <div class="lb-header">
+      <div class="breadcrumb">
+        <span class="bc-link" onclick="showPage('home')">Home</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">Leaderboard</span>
+      </div>
+      <span class="section-tag">// leaderboard</span>
+      <h2 class="section-title">Top Coders</h2>
+      <p class="section-sub">The most dedicated learners on Algorius this month.</p>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="lb-stats-row">
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">1,247</span>
+        <span class="lb-stat-label">Active Learners</span>
+      </div>
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">8,392</span>
+        <span class="lb-stat-label">Exercises Completed</span>
+      </div>
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">42,100</span>
+        <span class="lb-stat-label">Total XP Earned</span>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="lb-filter-row">
+      <button class="lb-filter-btn active" onclick="filterLeaderboard('all', this)">All Time</button>
+      <button class="lb-filter-btn" onclick="filterLeaderboard('month', this)">This Month</button>
+      <button class="lb-filter-btn" onclick="filterLeaderboard('week', this)">This Week</button>
+    </div>
+
+    <!-- Top 3 podium -->
+    <div class="lb-podium" id="lb-podium">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Full table -->
+    <div class="lb-table-wrap">
+      <div class="lb-table-header">
+        <span class="lb-col-rank">Rank</span>
+        <span class="lb-col-user">User</span>
+        <span class="lb-col-lang">Top Language</span>
+        <span class="lb-col-exercises">Exercises</span>
+        <span class="lb-col-xp">XP</span>
+        <span class="lb-col-streak">Streak</span>
+      </div>
+      <div class="lb-table-body" id="lb-table-body">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- You card -->
+    <div class="lb-you-card">
+      <span class="lb-you-label">📍 Your Position</span>
+      <div class="lb-you-row">
+        <span class="lb-you-rank">#247</span>
+        <span class="lb-you-name">You</span>
+        <span class="lb-you-xp">320 XP</span>
+        <button class="btn-hero-primary lb-join-btn" onclick="showPage('auth')">Start Earning XP →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('about')">About Us</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PAGE: ABOUT US ===== -->
+<div id="page-about" class="page">
+
+  <!-- Hero -->
+  <section class="about-hero">
+    <div class="about-hero-bg"></div>
+    <div class="about-hero-content container">
+      <span class="section-tag">// about us</span>
+      <h2 class="section-title about-title">We're Building the<br/><span class="accent-green">Future of Coding Education</span></h2>
+      <p class="about-subtitle">Algorius is a student-built platform that believes everyone deserves a clear, hands-on path to becoming a developer — no fluff, no gatekeeping.</p>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="about-mission">
+    <div class="container">
+      <div class="about-mission-grid">
+        <div class="about-mission-text">
+          <span class="section-tag">// our mission</span>
+          <h3 class="about-section-h">Code With Purpose</h3>
+          <p>We built Algorius because we experienced first-hand how hard it is to learn programming without a clear, structured path. Most resources are either too abstract or dump everything on you at once.</p>
+          <p>Our mission is simple: give every learner — regardless of background — a hands-on, structured, and genuinely enjoyable path to coding mastery. Every course, every exercise, every feature is designed with that goal in mind.</p>
+        </div>
+        <div class="about-mission-code">
+          <div class="about-code-window">
+            <div class="about-code-bar">
+              <span class="about-code-dot" style="background:#ff5f57"></span>
+              <span class="about-code-dot" style="background:#febc2e"></span>
+              <span class="about-code-dot" style="background:#28c840"></span>
+              <span class="about-code-filename">mission.py</span>
+            </div>
+            <pre class="about-code-body"><span class="code-comment"># Algorius core values</span>
+
+<span class="code-kw">class</span> <span class="code-fn">Algorius</span>:
+    mission = <span class="code-str">"Code With Purpose"</span>
+    values  = [
+        <span class="code-str">"Hands-on learning"</span>,
+        <span class="code-str">"Clear structure"</span>,
+        <span class="code-str">"No gatekeeping"</span>,
+        <span class="code-str">"Free to start"</span>,
+    ]
+
+    <span class="code-kw">def</span> <span class="code-fn">build</span>(self, student):
+        <span class="code-kw">while</span> student.learning:
+            student.<span class="code-fn">grow</span>()
+        <span class="code-kw">return</span> <span class="code-str">"Developer 🚀"</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="about-values">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// our values</span>
+        <h3 class="section-title">What We Stand For</h3>
+      </div>
+      <div class="about-values-grid">
+        <div class="about-value-card">
+          <div class="about-value-icon">⚡</div>
+          <h4>Learn By Doing</h4>
+          <p>Every lesson has a hands-on exercise. We believe you learn to code by writing code — not just watching videos.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🧭</div>
+          <h4>Structured Paths</h4>
+          <p>No overwhelm. Our curriculum is carefully sequenced so each concept builds on the previous one naturally.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🔓</div>
+          <h4>Accessible to All</h4>
+          <p>Core content is free, always. We believe the barrier to programming education should be effort — not money.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🎯</div>
+          <h4>No Fluff</h4>
+          <p>We cut the noise. Every word, exercise, and feature is deliberate. If it doesn't help you learn, it doesn't belong.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="about-cta">
+    <div class="container">
+      <div class="about-cta-inner">
+        <h3>Ready to Start Coding?</h3>
+        <p>Join thousands of learners already on Algorius. It's free to start.</p>
+        <div class="about-cta-btns">
+          <button class="btn-hero-primary" onclick="showPage('courses')">Browse Courses →</button>
+          <button class="btn-hero-ghost" onclick="showPage('auth')">Create Free Account</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- Back to Top Button -->
+<button id="back-to-top" class="back-to-top" onclick="scrollToTop()" aria-label="Back to top">↑</button>
+
+<script src="script.js"></script>
+</body>
+</html>
