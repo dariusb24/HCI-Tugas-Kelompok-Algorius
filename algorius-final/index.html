@@ -39,6 +39,15 @@
           <a onclick="showCourse('java')">Java</a>
         </div>
       </div>
+      <nav class="nav-links">
+        <a class="nav-link" onclick="showPage('compiler')">
+          <span class="nav-link-icon">▶</span> Compiler
+        </a>
+        <a class="nav-link" onclick="showPage('leaderboard')">
+          <span class="nav-link-icon"></span> Leaderboard
+        </a>
+        <a class="nav-link" onclick="showPage('about')">About Us</a>
+      </nav>
     </div>
     <div class="nav-right" id="nav-right">
       <a href="#" class="btn-ghost" onclick="showPage('auth'); return false;">Sign In</a>
@@ -51,6 +60,9 @@
   <div class="mobile-menu" id="mobile-menu">
     <a onclick="showPage('home'); closeMobileMenu()">Home</a>
     <a onclick="showPage('courses'); closeMobileMenu()">All Courses</a>
+    <a onclick="showPage('compiler'); closeMobileMenu()">▶ Compiler</a>
+    <a onclick="showPage('leaderboard'); closeMobileMenu()">Leaderboard</a>
+    <a onclick="showPage('about'); closeMobileMenu()">About Us</a>
     <div class="mobile-menu-divider"></div>
     <a onclick="showCourse('c'); closeMobileMenu()">C Programming</a>
     <a onclick="showCourse('cpp'); closeMobileMenu()">C++</a>
@@ -203,8 +215,10 @@
         </div>
         <nav class="footer-links">
           <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('about')">About Us</a>
           <a onclick="showPage('pricing')">Pricing</a>
-          <a onclick="showPage('auth')">Sign In</a>
         </nav>
         <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
       </div>
@@ -435,8 +449,10 @@
         </div>
         <nav class="footer-links">
           <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('about')">About Us</a>
           <a onclick="showPage('pricing')">Pricing</a>
-          <a onclick="showPage('auth')">Sign In</a>
         </nav>
         <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
       </div>
@@ -525,8 +541,11 @@
         </div>
         <nav class="footer-links">
           <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
           <a onclick="showPage('courses')">Courses</a>
-          <a onclick="showPage('auth')">Sign In</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('about')">About Us</a>
         </nav>
         <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
       </div>
@@ -628,6 +647,8 @@
         </div>
         <nav class="footer-links">
           <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
           <a onclick="showPage('courses')">Courses</a>
           <a onclick="showPage('pricing')">Pricing</a>
         </nav>
@@ -777,6 +798,303 @@
 
     </div>
   </div>
+</div>
+
+<!-- ===== PAGE: COMPILER ===== -->
+<div id="page-compiler" class="page">
+  <div class="compiler-page">
+    <div class="container">
+      <div class="compiler-header">
+        <div class="breadcrumb">
+          <span class="bc-link" onclick="showPage('home')">Home</span>
+          <span class="bc-sep">/</span>
+          <span class="bc-current">Online Compiler</span>
+        </div>
+        <div class="compiler-title-row">
+          <div>
+            <span class="section-tag">// online compiler</span>
+            <h2 class="section-title compiler-h2">Code, Run, Learn</h2>
+            <p class="section-sub">Write and run code instantly — no setup required.</p>
+          </div>
+          <div class="compiler-lang-select-wrap">
+            <label class="compiler-lang-label">Language:</label>
+            <div class="compiler-lang-tabs" id="compiler-lang-tabs">
+              <button class="clang-tab active" data-lang="c" onclick="switchCompilerLang('c', this)">C</button>
+              <button class="clang-tab" data-lang="cpp" onclick="switchCompilerLang('cpp', this)">C++</button>
+              <button class="clang-tab" data-lang="python" onclick="switchCompilerLang('python', this)">Python</button>
+              <button class="clang-tab" data-lang="js" onclick="switchCompilerLang('js', this)">JavaScript</button>
+              <button class="clang-tab" data-lang="java" onclick="switchCompilerLang('java', this)">Java</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compiler-layout">
+        <!-- Editor Panel -->
+        <div class="compiler-editor-panel">
+          <div class="editor-header">
+            <span class="editor-lang" id="compiler-filename">main.c</span>
+            <div class="editor-controls">
+              <button class="editor-reset-btn" onclick="resetCompilerCode()" title="Reset to template">↺ Reset</button>
+              <div class="editor-dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="compiler-editor-body editor-body" contenteditable="true" spellcheck="false" id="compiler-code-editor"></div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="compiler-output-panel">
+          <div class="compiler-output-header">
+            <span class="compiler-output-title">Output</span>
+            <div class="compiler-output-controls">
+              <button class="btn-run" onclick="runCompilerCode()">▶ Run</button>
+              <button class="compiler-clear-btn" onclick="clearCompilerOutput()">Clear</button>
+            </div>
+          </div>
+          <div class="compiler-output-body" id="compiler-output-body">
+            <span class="compiler-output-placeholder">// Click "Run" to execute your code</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip bar -->
+      <div class="compiler-tips">
+        <span class="compiler-tip-label">💡 Tips:</span>
+        <span>This is a simulated compiler — great for learning syntax and logic.</span>
+        <span class="compiler-tip-sep">·</span>
+        <span>Each language has a starter template to get you going.</span>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <span class="logo-icon">⟨/⟩</span>
+            <span class="logo-text">algorius</span>
+          </div>
+          <nav class="footer-links">
+            <a onclick="showPage('home')">Home</a>
+            <a onclick="showPage('courses')">Courses</a>
+            <a onclick="showPage('leaderboard')">Leaderboard</a>
+            <a onclick="showPage('about')">About Us</a>
+          </nav>
+          <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ===== PAGE: LEADERBOARD ===== -->
+<div id="page-leaderboard" class="page">
+  <div class="container">
+    <div class="lb-header">
+      <div class="breadcrumb">
+        <span class="bc-link" onclick="showPage('home')">Home</span>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">Leaderboard</span>
+      </div>
+      <span class="section-tag">// leaderboard</span>
+      <h2 class="section-title">Top Coders</h2>
+      <p class="section-sub">The most dedicated learners on Algorius this month.</p>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="lb-stats-row">
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">1,247</span>
+        <span class="lb-stat-label">Active Learners</span>
+      </div>
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">8,392</span>
+        <span class="lb-stat-label">Exercises Completed</span>
+      </div>
+      <div class="lb-stat-card">
+        <span class="lb-stat-num">42,100</span>
+        <span class="lb-stat-label">Total XP Earned</span>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="lb-filter-row">
+      <button class="lb-filter-btn active" onclick="filterLeaderboard('all', this)">All Time</button>
+      <button class="lb-filter-btn" onclick="filterLeaderboard('month', this)">This Month</button>
+      <button class="lb-filter-btn" onclick="filterLeaderboard('week', this)">This Week</button>
+    </div>
+
+    <!-- Top 3 podium -->
+    <div class="lb-podium" id="lb-podium">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Full table -->
+    <div class="lb-table-wrap">
+      <div class="lb-table-header">
+        <span class="lb-col-rank">Rank</span>
+        <span class="lb-col-user">User</span>
+        <span class="lb-col-lang">Top Language</span>
+        <span class="lb-col-exercises">Exercises</span>
+        <span class="lb-col-xp">XP</span>
+        <span class="lb-col-streak">Streak</span>
+      </div>
+      <div class="lb-table-body" id="lb-table-body">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- You card -->
+    <div class="lb-you-card">
+      <span class="lb-you-label">📍 Your Position</span>
+      <div class="lb-you-row">
+        <span class="lb-you-rank">#247</span>
+        <span class="lb-you-name">You</span>
+        <span class="lb-you-xp">320 XP</span>
+        <button class="btn-hero-primary lb-join-btn" onclick="showPage('auth')">Start Earning XP →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('about')">About Us</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== PAGE: ABOUT US ===== -->
+<div id="page-about" class="page">
+
+  <!-- Hero -->
+  <section class="about-hero">
+    <div class="about-hero-bg"></div>
+    <div class="about-hero-content container">
+      <span class="section-tag">// about us</span>
+      <h2 class="section-title about-title">We're Building the<br/><span class="accent-green">Future of Coding Education</span></h2>
+      <p class="about-subtitle">Algorius is a student-built platform that believes everyone deserves a clear, hands-on path to becoming a developer — no fluff, no gatekeeping.</p>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="about-mission">
+    <div class="container">
+      <div class="about-mission-grid">
+        <div class="about-mission-text">
+          <span class="section-tag">// our mission</span>
+          <h3 class="about-section-h">Code With Purpose</h3>
+          <p>We built Algorius because we experienced first-hand how hard it is to learn programming without a clear, structured path. Most resources are either too abstract or dump everything on you at once.</p>
+          <p>Our mission is simple: give every learner — regardless of background — a hands-on, structured, and genuinely enjoyable path to coding mastery. Every course, every exercise, every feature is designed with that goal in mind.</p>
+        </div>
+        <div class="about-mission-code">
+          <div class="about-code-window">
+            <div class="about-code-bar">
+              <span class="about-code-dot" style="background:#ff5f57"></span>
+              <span class="about-code-dot" style="background:#febc2e"></span>
+              <span class="about-code-dot" style="background:#28c840"></span>
+              <span class="about-code-filename">mission.py</span>
+            </div>
+            <pre class="about-code-body"><span class="code-comment"># Algorius core values</span>
+
+<span class="code-kw">class</span> <span class="code-fn">Algorius</span>:
+    mission = <span class="code-str">"Code With Purpose"</span>
+    values  = [
+        <span class="code-str">"Hands-on learning"</span>,
+        <span class="code-str">"Clear structure"</span>,
+        <span class="code-str">"No gatekeeping"</span>,
+        <span class="code-str">"Free to start"</span>,
+    ]
+
+    <span class="code-kw">def</span> <span class="code-fn">build</span>(self, student):
+        <span class="code-kw">while</span> student.learning:
+            student.<span class="code-fn">grow</span>()
+        <span class="code-kw">return</span> <span class="code-str">"Developer 🚀"</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="about-values">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// our values</span>
+        <h3 class="section-title">What We Stand For</h3>
+      </div>
+      <div class="about-values-grid">
+        <div class="about-value-card">
+          <div class="about-value-icon">⚡</div>
+          <h4>Learn By Doing</h4>
+          <p>Every lesson has a hands-on exercise. We believe you learn to code by writing code — not just watching videos.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🧭</div>
+          <h4>Structured Paths</h4>
+          <p>No overwhelm. Our curriculum is carefully sequenced so each concept builds on the previous one naturally.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🔓</div>
+          <h4>Accessible to All</h4>
+          <p>Core content is free, always. We believe the barrier to programming education should be effort — not money.</p>
+        </div>
+        <div class="about-value-card">
+          <div class="about-value-icon">🎯</div>
+          <h4>No Fluff</h4>
+          <p>We cut the noise. Every word, exercise, and feature is deliberate. If it doesn't help you learn, it doesn't belong.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="about-cta">
+    <div class="container">
+      <div class="about-cta-inner">
+        <h3>Ready to Start Coding?</h3>
+        <p>Join thousands of learners already on Algorius. It's free to start.</p>
+        <div class="about-cta-btns">
+          <button class="btn-hero-primary" onclick="showPage('courses')">Browse Courses →</button>
+          <button class="btn-hero-ghost" onclick="showPage('auth')">Create Free Account</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">⟨/⟩</span>
+          <span class="logo-text">algorius</span>
+        </div>
+        <nav class="footer-links">
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+          <a onclick="showPage('courses')">Courses</a>
+          <a onclick="showPage('compiler')">Compiler</a>
+          <a onclick="showPage('leaderboard')">Leaderboard</a>
+        </nav>
+        <p class="footer-copy">© 2025 Algorius. No Fluff, Just Code.</p>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <!-- Toast Notification -->
